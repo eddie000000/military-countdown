@@ -13,9 +13,9 @@
     }
     .container {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      flex-direction: row;
       gap: 40px;
       margin-top: 50px;
     }
@@ -38,7 +38,7 @@
       text-align: left;
     }
     .info p {
-      margin: 10px 0;
+      margin: 8px 0;
     }
   </style>
 </head>
@@ -56,12 +56,17 @@
     <p id="served">已經入伍：</p>
     <p id="remaining">距離退伍還有：</p>
     <p id="percent">已經完成：</p>
+    <hr>
+    <p id="workdays">剩餘工作日（週一至週五）：</p>
+    <p id="holidays">剩餘假日（週六、週日）：</p>
+    <p id="meals">剩餘吃飯次數（14餐/週）：</p>
+    <p id="baths">剩餘洗澡次數（4次/週）：</p>
   </div>
 </div>
 
 <script>
   // 設定開始和結束時間
-  const startDate = new Date('2025-2-13T00:00:00'); // ⚡ 你的入伍日（請修改成正確）
+  const startDate = new Date('2025-02-13T00:00:00'); // ⚡ 你的入伍日
   const endDate = new Date('2025-05-27T00:00:00');   // ⚡ 你的退伍日
 
   // 初始化圓形圖表
@@ -94,6 +99,23 @@
     return `${days}天${hours}小時${minutes}分鐘${seconds}秒`;
   }
 
+  function countDays(now, end) {
+    let workdays = 0;
+    let holidays = 0;
+    let temp = new Date(now);
+
+    while (temp <= end) {
+      const day = temp.getDay(); // 0 = 星期日, 6 = 星期六
+      if (day === 0 || day === 6) {
+        holidays++;
+      } else {
+        workdays++;
+      }
+      temp.setDate(temp.getDate() + 1);
+    }
+    return { workdays, holidays };
+  }
+
   function update() {
     const now = new Date();
     const totalDuration = endDate - startDate;
@@ -101,12 +123,25 @@
     const remainingDuration = endDate - now;
     const percentage = Math.min(Math.max((servedDuration / totalDuration) * 100, 0), 100);
 
+    // 計算剩餘工作日與假日
+    const { workdays, holidays } = countDays(now, endDate);
+
+    // 餐數與洗澡次數
+    const remainingWeeks = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24 * 7)); // 剩餘週數
+    const remainingMeals = workdays / 5 * 14; // 每週五天吃14餐
+    const remainingBaths = remainingWeeks * 4; // 每週洗4次澡
+
     // 更新文字
     document.getElementById('nowTime').textContent = `現在時間：${now.toLocaleString('zh-TW')}`;
     document.getElementById('endTime').textContent = `退伍生效時間：${endDate.toLocaleString('zh-TW')}`;
     document.getElementById('served').textContent = `已經入伍 ${formatDuration(servedDuration)} (${(servedDuration/(1000*60*60*24)).toFixed(2)}天)`;
     document.getElementById('remaining').textContent = `距離退伍還有 ${formatDuration(remainingDuration)} (${(remainingDuration/(1000*60*60*24)).toFixed(2)}天)`;
     document.getElementById('percent').textContent = `已經完成了 ${percentage.toFixed(4)} %`;
+
+    document.getElementById('workdays').textContent = `剩餘工作日（週一至週五）：${workdays} 天`;
+    document.getElementById('holidays').textContent = `剩餘假日（週六、週日）：${holidays} 天`;
+    document.getElementById('meals').textContent = `剩餘吃飯次數（14餐/週）：${Math.round(remainingMeals)} 餐`;
+    document.getElementById('baths').textContent = `剩餘洗澡次數（4次/週）：${remainingBaths} 次`;
 
     // 更新圓圈
     chart.data.datasets[0].data = [percentage, 100 - percentage];
