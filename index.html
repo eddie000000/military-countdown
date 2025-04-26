@@ -6,45 +6,107 @@
   <title>退伍倒數計時器</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f1f2f6;
+      color: #2f3542;
       text-align: center;
-      margin-top: 100px;
+      padding: 40px;
     }
     h1 {
       font-size: 2.5em;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
-    #countdown {
-      font-size: 2em;
-      color: #2e86de;
+    #clock {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 1.2em;
+      color: #57606f;
+    }
+    .card {
+      background-color: #ffffff;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: inline-block;
+      margin-top: 30px;
+      width: 90%;
+      max-width: 500px;
+    }
+    .stat {
+      font-size: 1.5em;
+      margin: 15px 0;
     }
   </style>
 </head>
 <body>
-  <h1>退伍倒數</h1>
-  <div id="countdown">載入中...</div>
+  <div id="clock">--:--:--</div>
+  <h1>退伍倒數計時器</h1>
+  <div class="card">
+    <div class="stat" id="countdown">載入中...</div>
+    <div class="stat" id="days-left"></div>
+    <div class="stat" id="workdays"></div>
+    <div class="stat" id="meals"></div>
+    <div class="stat" id="showers"></div>
+  </div>
 
   <script>
-    // 設定退伍日期 (這邊請改成你的退伍日期)
-    const dischargeDate = new Date('2025-05-27T00:00:00');
+    const dischargeDate = new Date("2025-05-27T00:00:00");
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
+      document.getElementById("clock").textContent = timeStr;
+    }
 
     function updateCountdown() {
       const now = new Date();
-      const diffTime = dischargeDate - now;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffMs = dischargeDate - now;
 
-      const countdownElement = document.getElementById('countdown');
-      if (diffDays > 0) {
-        countdownElement.innerText = `還有 ${diffDays} 天退伍！`;
-      } else if (diffDays === 0) {
-        countdownElement.innerText = "今天退伍！恭喜！🎉";
+      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      let countdownText = "";
+      if (diffMs > 0) {
+        countdownText = `距離退伍還有 ${days} 天 ${hours} 小時 ${minutes} 分鐘`;
       } else {
-        countdownElement.innerText = `已退伍 ${Math.abs(diffDays)} 天了`;
+        countdownText = "🎉 已經退伍囉！恭喜！";
       }
+
+      document.getElementById("countdown").textContent = countdownText;
+
+      // 計算工作日與假日
+      let workdays = 0;
+      let holidays = 0;
+      let today = new Date(now);
+
+      while (today < dischargeDate) {
+        const day = today.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+        if (day >= 1 && day <= 5) {
+          workdays++;
+        } else {
+          holidays++;
+        }
+        today.setDate(today.getDate() + 1);
+      }
+
+      document.getElementById("days-left").textContent = `剩餘工作日：${workdays} 天，假日：${holidays} 天`;
+
+      const mealsLeft = Math.ceil((workdays / 5) * 14);
+      document.getElementById("meals").textContent = `剩餘要吃的餐數：約 ${mealsLeft} 餐`;
+
+      const showersLeft = Math.ceil((workdays / 5) * 4);
+      document.getElementById("showers").textContent = `剩餘要洗的澡：約 ${showersLeft} 次`;
     }
 
+    // 初始化
+    updateClock();
     updateCountdown();
-    setInterval(updateCountdown, 1000 * 60 * 60); // 每小時更新一次
+
+    // 每秒更新時鐘，每分鐘更新倒數
+    setInterval(updateClock, 1000);
+    setInterval(updateCountdown, 60000);
   </script>
 </body>
 </html>
