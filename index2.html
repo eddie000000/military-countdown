@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>退伍倒數進度條</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: row;
+      gap: 40px;
+      margin-top: 50px;
+    }
+    #progressContainer {
+      width: 200px;
+      height: 200px;
+      position: relative;
+    }
+    #progressText {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #2f3542;
+    }
+    .info {
+      font-size: 18px;
+      text-align: left;
+    }
+    .info p {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div id="progressContainer">
+    <canvas id="progressChart"></canvas>
+    <div id="progressText">0%</div>
+  </div>
+
+  <div class="info">
+    <p id="nowTime">現在時間：</p>
+    <p id="endTime">退伍生效時間：</p>
+    <p id="served">已經入伍：</p>
+    <p id="remaining">距離退伍還有：</p>
+    <p id="percent">已經完成：</p>
+  </div>
+</div>
+
+<script>
+  // 設定開始和結束時間
+  const startDate = new Date('2023-09-28T00:00:00'); // ⚡ 你的入伍日（請修改成正確）
+  const endDate = new Date('2025-05-27T00:00:00');   // ⚡ 你的退伍日
+
+  // 初始化圓形圖表
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#2ed573', '#dfe4ea'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '70%',
+      responsive: true,
+      plugins: {
+        tooltip: { enabled: false },
+        legend: { display: false }
+      }
+    }
+  });
+
+  function formatDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (60 * 60 * 24));
+    const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}天${hours}小時${minutes}分鐘${seconds}秒`;
+  }
+
+  function update() {
+    const now = new Date();
+    const totalDuration = endDate - startDate;
+    const servedDuration = now - startDate;
+    const remainingDuration = endDate - now;
+    const percentage = Math.min(Math.max((servedDuration / totalDuration) * 100, 0), 100);
+
+    // 更新文字
+    document.getElementById('nowTime').textContent = `現在時間：${now.toLocaleString('zh-TW')}`;
+    document.getElementById('endTime').textContent = `退伍生效時間：${endDate.toLocaleString('zh-TW')}`;
+    document.getElementById('served').textContent = `已經入伍 ${formatDuration(servedDuration)} (${(servedDuration/(1000*60*60*24)).toFixed(2)}天)`;
+    document.getElementById('remaining').textContent = `距離退伍還有 ${formatDuration(remainingDuration)} (${(remainingDuration/(1000*60*60*24)).toFixed(2)}天)`;
+    document.getElementById('percent').textContent = `已經完成了 ${percentage.toFixed(4)} %`;
+
+    // 更新圓圈
+    chart.data.datasets[0].data = [percentage, 100 - percentage];
+    chart.update();
+    document.getElementById('progressText').textContent = `${Math.floor(percentage)}%`;
+  }
+
+  update();
+  setInterval(update, 1000); // 每秒更新
+</script>
+
+</body>
+</html>
