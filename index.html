@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>退伍倒數計時器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    #countdown {
+      font-size: 2em;
+      color: #2e86de;
+    }
+  </style>
+</head>
+<body>
+  <h1>退伍倒數</h1>
+  <div id="countdown">載入中...</div>
+
+  <script>
+    // 設定退伍日期 (這邊請改成你的退伍日期)
+    const dischargeDate = new Date('2025-12-31T00:00:00');
+
+    function updateCountdown() {
+      const now = new Date();
+      const diffTime = dischargeDate - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const countdownElement = document.getElementById('countdown');
+      if (diffDays > 0) {
+        countdownElement.innerText = `還有 ${diffDays} 天退伍！`;
+      } else if (diffDays === 0) {
+        countdownElement.innerText = "今天退伍！恭喜！🎉";
+      } else {
+        countdownElement.innerText = `已退伍 ${Math.abs(diffDays)} 天了`;
+      }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000 * 60 * 60); // 每小時更新一次
+  </script>
+</body>
+</html>
