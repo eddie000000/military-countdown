@@ -2,7 +2,7 @@
 
 [退伍計算機簡單版](https://eddie000000.github.io/military-countdown/index.html)\
 [退伍計算機有進度條版](https://eddie000000.github.io/military-countdown/index2.html)\
-[退伍計算機超級完整版](https://eddie000000.github.io/military-countdown/index3.html)\
+[退伍計算機超級完整版](https://eddie000000.github.io/military-countdown/index3.html)
 
 功能 | 有\
 圓形進度條 | ✅\
