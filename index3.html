@@ -6,7 +6,75 @@
   <title>退伍倒數進度條</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* 之前的CSS都一樣，這裡略過 */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    #progressContainer {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 0 auto;
+    }
+
+    #progressChart {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #progressText {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2em;
+      font-weight: bold;
+      color: #2f3542;
+    }
+
+    .info {
+      text-align: left;
+      margin-top: 20px;
+    }
+
+    .settings {
+      margin-bottom: 20px;
+    }
+
+    input[type="date"] {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 8px 15px;
+      margin: 5px;
+      background-color: #2ed573;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #26c06f;
+    }
   </style>
 </head>
 <body>
@@ -40,7 +108,7 @@
 
 <script>
   // 預設值
-  let startDate = new Date('2023-09-28T00:00:00');
+  let startDate = new Date('2025-02-13T00:00:00');
   let endDate = new Date('2025-05-27T00:00:00');
 
   const ctx = document.getElementById('progressChart').getContext('2d');
@@ -103,9 +171,9 @@
 
     document.getElementById('nowTime').textContent = `現在時間：${now.toLocaleString('zh-TW')}`;
     document.getElementById('endTime').textContent = `退伍生效時間：${endDate.toLocaleString('zh-TW')}`;
-    document.getElementById('served').textContent = `已經入伍 ${formatDuration(servedDuration)} (${(servedDuration/(1000*60*60*24)).toFixed(2)}天)`;
-    document.getElementById('remaining').textContent = `距離退伍還有 ${formatDuration(remainingDuration)} (${(remainingDuration/(1000*60*60*24)).toFixed(2)}天)`;
-    document.getElementById('percent').textContent = `已經完成了 ${percentage.toFixed(4)} %`;
+    document.getElementById('served').textContent = `已經入伍：${formatDuration(servedDuration)} (${(servedDuration/(1000*60*60*24)).toFixed(2)}天)`;
+    document.getElementById('remaining').textContent = `距離退伍還有：${formatDuration(remainingDuration)} (${(remainingDuration/(1000*60*60*24)).toFixed(2)}天)`;
+    document.getElementById('percent').textContent = `已經完成：${percentage.toFixed(4)} %`;
 
     document.getElementById('workdays').textContent = `剩餘工作日（週一至週五）：${workdays} 天`;
     document.getElementById('holidays').textContent = `剩餘假日（週六、週日）：${holidays} 天`;
@@ -127,7 +195,7 @@
     const startInput = document.getElementById('startInput').value;
     const endInput = document.getElementById('endInput').value;
     if (startInput && endInput) {
-      startDate = new Date(startInput + 'T00:00:00'); // 補上時間，設為當天 00:00
+      startDate = new Date(startInput + 'T00:00:00'); // 日期直接設定成 00:00
       endDate = new Date(endInput + 'T00:00:00');
       update();
     } else {
