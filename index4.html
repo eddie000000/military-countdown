@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>退伍倒數進度條＋打卡版</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    #progressContainer {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 0 auto;
+    }
+    #progressChart {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #progressText {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #2f3542;
+    }
+    .info {
+      text-align: left;
+      margin-top: 20px;
+    }
+    .settings, .checkin, .achievements {
+      margin: 20px 0;
+    }
+    input[type="date"] {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 8px 15px;
+      margin: 5px;
+      background-color: #2ed573;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #26c06f;
+    }
+    .badge {
+      display: inline-block;
+      background: gold;
+      color: white;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 20px;
+      font-weight: bold;
+      animation: pop 0.5s;
+    }
+    @keyframes pop {
+      0% { transform: scale(0); }
+      70% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="settings">
+  <h3>設定入伍與退伍日期</h3>
+  <input type="date" id="startInput">
+  <input type="date" id="endInput">
+  <button onclick="applyDates()">套用</button>
+</div>
+
+<div class="container">
+  <div id="progressContainer">
+    <canvas id="progressChart"></canvas>
+    <div id="progressText">0%</div>
+  </div>
+
+  <div class="info">
+    <p id="nowTime">現在時間：</p>
+    <p id="endTime">退伍生效時間：</p>
+    <p id="served">已經入伍：</p>
+    <p id="remaining">距離退伍還有：</p>
+    <p id="percent">已經完成：</p>
+    <hr>
+    <p id="workdays">剩餘工作日（週一至週五）：</p>
+    <p id="holidays">剩餘假日（週六、週日）：</p>
+    <p id="meals">剩餘吃飯次數（14餐/週）：</p>
+    <p id="baths">剩餘洗澡次數（4次/週）：</p>
+  </div>
+
+  <div class="checkin">
+    <h3>打卡區</h3>
+    <button onclick="checkIn()">✅ 今天打卡！</button>
+    <p id="checkinCount">累積打卡：0 天</p>
+    <p id="lastCheckin">上次打卡：無</p>
+  </div>
+
+  <div class="achievements">
+    <h3>成就徽章</h3>
+    <div id="badges"></div>
+  </div>
+</div>
+
+<script>
+  let startDate = new Date('2025-02-13T00:00:00');
+  let endDate = new Date('2025-05-27T00:00:00');
+
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#2ed573', '#dfe4ea'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      cutout: '70%',
+      responsive: true,
+      plugins: {
+        tooltip: { enabled: false },
+        legend: { display: false }
+      }
+    }
+  });
+
+  function formatDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (60 * 60 * 24));
+    const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const seconds = totalSeconds % 60;
+    return `${days}天${hours}小時${minutes}分鐘${seconds}秒`;
+  }
+
+  function countDays(now, end) {
+    let workdays = 0;
+    let holidays = 0;
+    let temp = new Date(now);
+    while (temp <= end) {
+      const day = temp.getDay();
+      if (day === 0 || day === 6) {
+        holidays++;
+      } else {
+        workdays++;
+      }
+      temp.setDate(temp.getDate() + 1);
+    }
+    return { workdays, holidays };
+  }
+
+  function update() {
+    const now = new Date();
+    const totalDuration = endDate - startDate;
+    const servedDuration = now - startDate;
+    const remainingDuration = endDate - now;
+    const percentage = Math.min(Math.max((servedDuration / totalDuration) * 100, 0), 100);
+
+    const { workdays, holidays } = countDays(now, endDate);
+    const remainingWeeks = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24 * 7));
+    const remainingMeals = workdays / 5 * 14;
+    const remainingBaths = remainingWeeks * 4;
+
+    document.getElementById('nowTime').textContent = `現在時間：${now.toLocaleString('zh-TW')}`;
+    document.getElementById('endTime').textContent = `退伍生效時間：${endDate.toLocaleString('zh-TW')}`;
+    document.getElementById('served').textContent = `已經入伍：${formatDuration(servedDuration)} (${(servedDuration/(1000*60*60*24)).toFixed(2)}天)`;
+    document.getElementById('remaining').textContent = `距離退伍還有：${formatDuration(remainingDuration)} (${(remainingDuration/(1000*60*60*24)).toFixed(2)}天)`;
+    document.getElementById('percent').textContent = `已經完成：${percentage.toFixed(4)} %`;
+
+    document.getElementById('workdays').textContent = `剩餘工作日（週一至週五）：${workdays} 天`;
+    document.getElementById('holidays').textContent = `剩餘假日（週六、週日）：${holidays} 天`;
+    document.getElementById('meals').textContent = `剩餘吃飯次數（14餐/週）：${Math.round(remainingMeals)} 餐`;
+    document.getElementById('baths').textContent = `剩餘洗澡次數（4次/週）：${remainingBaths} 次`;
+
+    if (percentage >= 80) {
+      chart.data.datasets[0].backgroundColor = ['#f1c40f', '#dfe4ea'];
+    } else {
+      chart.data.datasets[0].backgroundColor = ['#2ed573', '#dfe4ea'];
+    }
+
+    chart.data.datasets[0].data = [percentage, 100 - percentage];
+    chart.update();
+    document.getElementById('progressText').textContent = `${Math.floor(percentage)}%`;
+
+    updateCheckinDisplay();
+  }
+
+  function applyDates() {
+    const startInput = document.getElementById('startInput').value;
+    const endInput = document.getElementById('endInput').value;
+    if (startInput && endInput) {
+      startDate = new Date(startInput + 'T00:00:00');
+      endDate = new Date(endInput + 'T00:00:00');
+      update();
+    } else {
+      alert('請輸入正確的日期！');
+    }
+  }
+
+  // 打卡功能
+  function checkIn() {
+    const today = new Date().toISOString().slice(0,10);
+    const lastCheck = localStorage.getItem('lastCheckin');
+    if (today === lastCheck) {
+      alert('今天已經打卡過囉！明天再來～');
+      return;
+    }
+    localStorage.setItem('lastCheckin', today);
+    let count = parseInt(localStorage.getItem('checkinCount') || '0');
+    count++;
+    localStorage.setItem('checkinCount', count);
+    checkAchievement(count);
+    updateCheckinDisplay();
+  }
+
+  function updateCheckinDisplay() {
+    const last = localStorage.getItem('lastCheckin') || '無';
+    const count = parseInt(localStorage.getItem('checkinCount') || '0');
+    document.getElementById('checkinCount').textContent = `累積打卡：${count} 天`;
+    document.getElementById('lastCheckin').textContent = `上次打卡：${last}`;
+  }
+
+  function checkAchievement(count) {
+    if (count % 10 === 0) {
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.textContent = `🎖️ 累積打卡 ${count} 天！`;
+      document.getElementById('badges').appendChild(badge);
+    }
+  }
+
+  update();
+  setInterval(update, 1000);
+</script>
+
+</body>
+</html>
